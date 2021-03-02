@@ -72,13 +72,26 @@ module ExternalDataset
         system "csvclean #{output_csv}", exception: true, chdir: ROOT_DIR.join('csv/nys').to_s
       end
 
+      seen_trans_numbers = Set.new
+      skip_count = 0
+
       CSV.open(ROOT_DIR.join('csv/nys/nys_disclosures.csv'), 'w') do |destination|
         FILES.map(&:second).map(&TO_CSV_PATH).each do |csv_filepath|
           CSV.foreach(csv_filepath) do |row|
-            destination.add_row row[0..28] + row[30..]
+
+            trans_number = row[13]
+
+            if seen_trans_numbers.include? trans_number
+              Rails.logger.info "Skipping row with TRANS_NUMBER: #{trans_number}"
+              skip_count += 1
+            else
+              destination.add_row row[0..28] + row[30..]
+              seen_trans_numbers << trans_number
+            end
           end
         end
       end
+      Rails.logger.info "Skipped #{skip_count} duplicates from NYS disclosures"
     end
   end
 end
