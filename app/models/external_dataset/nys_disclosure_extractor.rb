@@ -68,7 +68,8 @@ module ExternalDataset
         output_csv = ROOT_DIR.join('csv/nys', "#{inner}.csv")
         system "unzip -o #{outer_zip} #{inner}.zip -d #{ROOT_DIR.join('original/nys')}", exception: true
         system "unzip -o #{inner_zip} #{inner}.csv -d #{ROOT_DIR.join('original/nys')}", exception: true
-        system "tr -d '\\000' < #{original_csv} | iconv -f iso-8859-1 -t utf8  > #{output_csv}", exception: true
+        system "iconv -f iso-8859-1 -t utf8 #{original_csv} > #{output_csv}", exception: true
+        system "sed -i 's/\\x0//g' #{output_csv}", exception: true
         system "csvclean #{output_csv}", exception: true, chdir: ROOT_DIR.join('csv/nys').to_s
       end
 
@@ -80,6 +81,17 @@ module ExternalDataset
           CSV.foreach(csv_filepath) do |row|
 
             trans_number = row[13]
+
+            # fix for r_itemized and r_liability
+            # example error:  (ActiveRecord::ValueTooLong) CONTEXT:  COPY external_data_nys_disclosures, line 5868882, column r_itemized: ",Y""
+            if row[40].is_a?(String) && row[40].length > 1
+              row[40] = row[40].tr(',', '')[0]
+            end
+
+            if row[41].is_a?(String) && row[41].length > 1
+              row[41] = row[41].tr(',', '')[0]
+            end
+
 
             if seen_trans_numbers.include? trans_number
               Rails.logger.info "Skipping row with TRANS_NUMBER: #{trans_number}"
