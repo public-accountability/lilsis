@@ -113,7 +113,7 @@ module RspecHelpers
     end
 
     def create_really_basic_user
-      FactoryBot.create(:user)
+      create_basic_user
     end
 
     def create_basic_user(**attributes)
