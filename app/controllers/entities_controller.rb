@@ -19,6 +19,7 @@ class EntitiesController < ApplicationController
   before_action :authenticate_user!, except: [:show, :datatable, :political, :contributions, :references, :interlocks, :giving, :validate]
   before_action :block_restricted_user_access, only: [:new, :create, :update, :create_bulk]
   before_action -> { current_user.raise_unless_can_edit! }, only: EDITABLE_ACTIONS
+  before_action -> { check_permission('edit') }, only: EDITABLE_ACTIONS
   before_action :importers_only, only: IMPORTER_ACTIONS
   before_action :set_entity, except: [:new, :create, :show, :create_bulk, :validate]
   before_action :set_entity_for_profile_page, only: [:show]
@@ -82,7 +83,7 @@ class EntitiesController < ApplicationController
         redirect_to concretize_edit_entity_path(@entity)
       end
 
-    else # encounted error
+    else
 
       if wants_json_response?
         render json: { status: 'ERROR', errors: @entity.errors.messages }
