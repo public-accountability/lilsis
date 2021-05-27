@@ -3,7 +3,7 @@
 class User < ApplicationRecord
   include UserEdits::ActiveUsers
 
-  MINUTES_BEFORE_USER_CAN_EDIT = 60
+  MINUTES_BEFORE_USER_CAN_EDIT = 720
 
   enum role: { user: 0, admin: 1, system: 2 }
 
